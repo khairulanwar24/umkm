@@ -18,12 +18,25 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-users';
+
+    protected static ?string $navigationLabel = 'Manajemen User';
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->role === 'admin';
+    }
+
 
     public static function form(Schema $schema): Schema
     {
@@ -42,13 +55,14 @@ class UserResource extends Resource
                 ->hint('Minimal 5 karakter tidak boleh ada spasi')
                 ->minLength(5)
                 ->regex('/^\S*$/')
-                ->unique(User::class, 'username', ignoreRecord: true)
+                ->unique(ignoreRecord: true)
                 ->required(),
+
 
             TextInput::make('email')
                 ->label('Email')
                 ->email()
-                ->unique(User::class, 'email', ignoreRecord: true)
+                ->unique(ignoreRecord: true)
                 ->required(),
 
             TextInput::make('password')
@@ -70,7 +84,30 @@ class UserResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return UsersTable::configure($table);
+        return $table
+            ->columns([
+                ImageColumn::make('logo')
+                ->label('Logo Toko'),
+                TextColumn::make('name')
+                ->label('Nama Toko'),
+                TextColumn::make('username')
+                ->label('Username'),
+                TextColumn::make('email')
+                ->label('Email'),
+                TextColumn::make("role")
+                ->label('Role'),
+                TextColumn::make('created_at')->dateTime()
+                ->label('Dibuat Pada'),
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
+        ]);
+            // ->bulkActions(UsersTable::getBulkActions());
     }
 
     public static function getRelations(): array
